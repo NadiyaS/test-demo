@@ -1,23 +1,32 @@
 {
   "public": {
     "default": {
-      "commerce-endpoint": "https://na1.api.commerce.adobe.com/QDmZTJos8DgBZw96hVLwH1/graphql",
-      "adobe-commerce-optimizer": true,
+      "commerce-core-endpoint": "https://mcstaging.oqyof733ykmii.dummycachetest.com/graphql",
+      "commerce-endpoint": "https://na1-sandbox.api.commerce.adobe.com/QDmZTJos8DgBZw96hVLwH1/graphql",
       "headers": {
+        "all": {
+          "Store": "default"
+        },
         "cs": {
-          "ac-view-id": "f6dda415-7d58-4109-aaa5-d8821b508b1e",
-          "ac-price-book-id": "base::356a192b7913b04c54574d18c28d46e6395428ab"
+          "AC-View-ID": "f6dda415-7d58-4109-aaa5-d8821b508b1e",
+          "AC-Price-Book-ID": "base::356a192b7913b04c54574d18c28d46e6395428ab"
         }
       },
+      "adobe-commerce-optimizer": true,
       "analytics": {
-        "environment-id": "QDmZTJos8DgBZw96hVLwH1",
-        "environment": "sandbox",
-        "store-url": "https://main--test-demo--NadiyaS.aem.live/",
         "base-currency-code": "USD",
+        "environment": "Testing",
+        "environment-id": "QDmZTJos8DgBZw96hVLwH1",
+        "locale": "default",
+        "store-url": "https://main--test-demo--nadiyas.aem.live/",
         "store-view-currency-code": "USD",
-        "storefront-template": "Other",
-        "view-id": "f6dda415-7d58-4109-aaa5-d8821b508b1e",
-        "locale": "default"
+        "storefront-template": "EDS",
+        "view-id": "f6dda415-7d58-4109-aaa5-d8821b508b1e"
+      },
+      "plugins": {
+        "picker": {
+          "rootCategory": "2"
+        }
       }
     }
   }
