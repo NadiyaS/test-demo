@@ -103,6 +103,9 @@ await initializeDropin(async () => {
     ProductDetails: {
       initialData: { ...product },
     },
+    ProductOptions: {
+      optionsTransformer: (options) => options.filter((option) => option.label !== 'Base Price'),
+    },
   };
 
   // Initialize Dropins
