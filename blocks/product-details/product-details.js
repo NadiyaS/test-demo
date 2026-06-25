@@ -202,6 +202,21 @@ export default async function decorate(block) {
   if (product) renderSizeSelector(product);
   events.on('pdp/data', (data) => { if (data?.sku) renderSizeSelector(data); }, { eager: true });
 
+  // DEBUG: static size test block
+  if ($sizeSelectorMobile) {
+    $sizeSelectorMobile.innerHTML = `
+      <div class="size-selector">
+        <p class="size-selector__label">Size (static test)</p>
+        <div class="size-selector__items">
+          <a class="size-selector__item" href="#"><img class="size-selector__cup" src="https://globalassets.starbucks.com/digitalassets/cups/CPR208_Short.png" alt="Short" width="40" height="36" /><span class="size-selector__size-name">Short</span></a>
+          <a class="size-selector__item" href="#"><img class="size-selector__cup" src="https://globalassets.starbucks.com/digitalassets/cups/CPR208_Tall.png" alt="Tall" width="40" height="44" /><span class="size-selector__size-name">Tall</span></a>
+          <a class="size-selector__item size-selector__item--active" href="#"><img class="size-selector__cup" src="https://globalassets.starbucks.com/digitalassets/cups/CPR208_Grande.png" alt="Grande" width="40" height="52" /><span class="size-selector__size-name">Grande</span></a>
+          <a class="size-selector__item" href="#"><img class="size-selector__cup" src="https://globalassets.starbucks.com/digitalassets/cups/CPR208_VentiHot.png" alt="Venti" width="40" height="60" /><span class="size-selector__size-name">Venti</span></a>
+        </div>
+      </div>
+    `;
+  }
+
   const gallerySlots = {
     CarouselThumbnail: (ctx) => {
       if (ctx.mediaType === 'image') {
