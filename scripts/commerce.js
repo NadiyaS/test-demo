@@ -334,17 +334,18 @@ export async function initializeCommerce() {
   CS_FETCH_GRAPHQL.setEndpoint(await commerceEndpointWithQueryParams());
   CS_FETCH_GRAPHQL.setFetchGraphQlHeaders((prev) => ({ ...prev, ...getHeaders('cs') }));
 
-  // Explicit per-path overrides — applied immediately and re-applied after
-  // auth/adobe-commerce-optimizer fires (which otherwise overwrites AC-Price-Book-ID)
-  const applyPathHeaders = () => {
-    const { pathname } = window.location;
-    if (pathname.startsWith('/site-two/')) {
-      CS_FETCH_GRAPHQL.setFetchGraphQlHeader('AC-View-ID', 'd0ca574b-79b6-415c-89be-c848d082a20a');
-      CS_FETCH_GRAPHQL.setFetchGraphQlHeader('AC-Price-Book-ID', 'starbucks_premium');
-    }
-  };
-  applyPathHeaders();
-  events.on('auth/adobe-commerce-optimizer', applyPathHeaders, { eager: true });
+  // Enforce per-path CS headers at request time via a before-hook so that
+  // event-driven overrides (auth/adobe-commerce-optimizer) cannot stomp them.
+  if (window.location.pathname.startsWith('/site-two/')) {
+    CS_FETCH_GRAPHQL.addBeforeHook((options) => ({
+      ...options,
+      headers: {
+        ...options.headers,
+        'AC-View-ID': 'd0ca574b-79b6-415c-89be-c848d082a20a',
+        'AC-Price-Book-ID': 'starbucks_premium',
+      },
+    }));
+  }
 
   return initializeDropins();
 }
