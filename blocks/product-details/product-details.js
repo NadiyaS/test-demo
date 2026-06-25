@@ -174,8 +174,8 @@ export default async function decorate(block) {
     const related = links.map(({ product: p }) => {
       const sku = p.sku.toUpperCase();
       const size = sizeOrder.find((s) => sku.endsWith(`-${s}`));
-      const basePath = window.location.pathname.split('/').slice(0, -1).join('/');
-      const href = rootLink(`${basePath}/${p.sku.toLowerCase()}`);
+      const slugSku = p.sku.toLowerCase();
+      const href = rootLink(`/products/${slugSku}/${slugSku}`);
       return { sku: p.sku, size, href };
     }).filter((e) => e.size);
 
