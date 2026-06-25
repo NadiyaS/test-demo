@@ -334,6 +334,13 @@ export async function initializeCommerce() {
   CS_FETCH_GRAPHQL.setEndpoint(await commerceEndpointWithQueryParams());
   CS_FETCH_GRAPHQL.setFetchGraphQlHeaders((prev) => ({ ...prev, ...getHeaders('cs') }));
 
+  // Explicit per-path overrides (bypasses sessionStorage cache issues)
+  const { pathname } = window.location;
+  if (pathname.startsWith('/site-two/')) {
+    CS_FETCH_GRAPHQL.setFetchGraphQlHeader('AC-View-ID', 'd0ca574b-79b6-415c-89be-c848d082a20a');
+    CS_FETCH_GRAPHQL.setFetchGraphQlHeader('AC-Price-Book-ID', 'starbucks_premium');
+  }
+
   return initializeDropins();
 }
 
