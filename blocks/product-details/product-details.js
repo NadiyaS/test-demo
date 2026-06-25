@@ -202,15 +202,15 @@ export default async function decorate(block) {
   if (product) renderSizeSelector(product);
   events.on('pdp/data', (data) => { if (data?.sku) renderSizeSelector(data); }, { eager: true });
 
-  function hideBasePriceOption() {
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  function hideBasePriceOption(root = document.body) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     let node;
     while ((node = walker.nextNode())) {
       if (node.textContent.trim() === 'Base Price') {
         let el = node.parentElement;
-        while (el && el !== document.body) {
-          if (el.tagName === 'FIELDSET' || (el.className && /option/i.test(el.className))) {
-            el.style.display = 'none';
+        while (el && el !== root) {
+          if (el.tagName === 'FIELDSET' || (el.className && typeof el.className === 'string' && /option/i.test(el.className))) {
+            el.style.setProperty('display', 'none', 'important');
             break;
           }
           el = el.parentElement;
@@ -218,7 +218,10 @@ export default async function decorate(block) {
       }
     }
   }
-  events.on('pdp/data', () => requestAnimationFrame(hideBasePriceOption), { eager: true });
+
+  // Watch for options to render and hide Base Price as soon as it appears
+  const basePriceObserver = new MutationObserver(() => hideBasePriceOption());
+  basePriceObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
 
   // DEBUG: static size test block
   if ($sizeSelectorMobile) {
