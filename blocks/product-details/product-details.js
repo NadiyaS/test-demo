@@ -153,11 +153,11 @@ export default async function decorate(block) {
 
     const sizeOrder = ['SHORT', 'TALL', 'GRANDE', 'VENTI', 'TRENTA'];
     const sizeImages = {
-      SHORT: 'https://globalassets.starbucks.com/digitalassets/cups/CPR208_Short.png',
-      TALL: 'https://globalassets.starbucks.com/digitalassets/cups/CPR208_Tall.png',
-      GRANDE: 'https://globalassets.starbucks.com/digitalassets/cups/CPR208_Grande.png',
-      VENTI: 'https://globalassets.starbucks.com/digitalassets/cups/CPR208_VentiHot.png',
-      TRENTA: 'https://globalassets.starbucks.com/digitalassets/cups/CPR208_Trenta.png',
+      SHORT: '/blocks/product-details/images/cup-short.svg',
+      TALL: '/blocks/product-details/images/cup-tall.svg',
+      GRANDE: '/blocks/product-details/images/cup-grande.svg',
+      VENTI: '/blocks/product-details/images/cup-venti.svg',
+      TRENTA: '/blocks/product-details/images/cup-trenta.svg',
     };
     const sizeLabels = {
       SHORT: 'Short', TALL: 'Tall', GRANDE: 'Grande', VENTI: 'Venti', TRENTA: 'Trenta',
