@@ -115,3 +115,67 @@
     grid-column: 1 / span 2;
   }
 }
+
+/* Size selector */
+.size-selector {
+  margin-top: var(--spacing-medium);
+  padding: var(--spacing-small) 0;
+}
+
+.size-selector__label {
+  font-size: var(--type-body-2-font-size);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-neutral-700);
+  margin: 0 0 var(--spacing-small);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.size-selector__items {
+  display: flex;
+  gap: var(--spacing-small);
+  align-items: flex-end;
+}
+
+.size-selector__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  color: var(--color-neutral-600);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.size-selector__item:hover {
+  border-color: var(--color-neutral-300);
+  background: var(--color-neutral-100);
+}
+
+.size-selector__item--active {
+  border-color: var(--color-brand-500, #00704a);
+  background: var(--color-brand-50, #f0f9f4);
+  color: var(--color-brand-700, #00704a);
+}
+
+.size-selector__cup {
+  object-fit: contain;
+  display: block;
+}
+
+.size-selector__size-name {
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Scale cups by size */
+.size-selector__item:nth-child(1) .size-selector__cup { height: 36px; }
+.size-selector__item:nth-child(2) .size-selector__cup { height: 44px; }
+.size-selector__item:nth-child(3) .size-selector__cup { height: 52px; }
+.size-selector__item:nth-child(4) .size-selector__cup { height: 60px; }
+.size-selector__item:nth-child(5) .size-selector__cup { height: 68px; }

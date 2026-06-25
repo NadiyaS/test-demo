@@ -101,6 +101,7 @@ export default async function decorate(block) {
     <div class="product-details__wrapper">
       <div class="product-details__left-column">
         <div class="product-details__gallery"></div>
+        <div class="product-details__size-selector"></div>
       </div>
       <div class="product-details__right-column">
         <div class="product-details__header"></div>
@@ -123,6 +124,7 @@ export default async function decorate(block) {
   `);
 
   const $alert = fragment.querySelector('.product-details__alert');
+  const $sizeSelector = fragment.querySelector('.product-details__size-selector');
   const $gallery = fragment.querySelector('.product-details__gallery');
   const $header = fragment.querySelector('.product-details__header');
   const $price = fragment.querySelector('.product-details__price');
@@ -137,6 +139,60 @@ export default async function decorate(block) {
   const $attributes = fragment.querySelector('.product-details__attributes');
 
   block.replaceChildren(fragment);
+
+  // Size selector: render related-size links under the gallery
+  function renderSizeSelector(productData) {
+    const links = productData?.links;
+    if (!links?.length) return;
+
+    const sizeOrder = ['SHORT', 'TALL', 'GRANDE', 'VENTI', 'TRENTA'];
+    const sizeImages = {
+      SHORT: 'https://globalassets.starbucks.com/digitalassets/cups/CPR208_Short.png',
+      TALL: 'https://globalassets.starbucks.com/digitalassets/cups/CPR208_Tall.png',
+      GRANDE: 'https://globalassets.starbucks.com/digitalassets/cups/CPR208_Grande.png',
+      VENTI: 'https://globalassets.starbucks.com/digitalassets/cups/CPR208_VentiHot.png',
+      TRENTA: 'https://globalassets.starbucks.com/digitalassets/cups/CPR208_Trenta.png',
+    };
+    const sizeLabels = {
+      SHORT: 'Short', TALL: 'Tall', GRANDE: 'Grande', VENTI: 'Venti', TRENTA: 'Trenta',
+    };
+
+    // Determine current SKU size
+    const currentSku = productData.sku?.toUpperCase() ?? '';
+    const currentSize = sizeOrder.find((s) => currentSku.endsWith(`-${s}`));
+
+    // Build entries: current + related, sorted
+    const related = links.map(({ product: p }) => {
+      const sku = p.sku.toUpperCase();
+      const size = sizeOrder.find((s) => sku.endsWith(`-${s}`));
+      const href = rootLink(`/products/${p.url?.split('/').pop() ?? p.sku.toLowerCase()}/${p.sku}`);
+      return { sku: p.sku, size, href };
+    }).filter((e) => e.size);
+
+    const currentEntry = currentSize
+      ? [{ sku: productData.sku, size: currentSize, href: window.location.pathname, current: true }]
+      : [];
+
+    const allSizes = [...currentEntry, ...related]
+      .sort((a, b) => sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size));
+
+    $sizeSelector.innerHTML = `
+      <div class="size-selector">
+        <p class="size-selector__label">Size</p>
+        <div class="size-selector__items">
+          ${allSizes.map(({ size, href, current }) => `
+            <a class="size-selector__item${current ? ' size-selector__item--active' : ''}" href="${href}" aria-label="${sizeLabels[size]}" ${current ? 'aria-current="page"' : ''}>
+              <img class="size-selector__cup" src="${sizeImages[size]}" alt="${sizeLabels[size]}" width="40" height="60" loading="lazy" />
+              <span class="size-selector__size-name">${sizeLabels[size]}</span>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  if (product) renderSizeSelector(product);
+  events.on('pdp/data', (data) => { if (data?.sku) renderSizeSelector(data); }, { eager: true });
 
   const gallerySlots = {
     CarouselThumbnail: (ctx) => {
