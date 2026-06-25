@@ -173,6 +173,13 @@
   white-space: nowrap;
 }
 
+.size-selector__size-oz {
+  font-size: 10px;
+  color: var(--color-neutral-500);
+  text-align: center;
+  white-space: nowrap;
+}
+
 /* Scale cups by size */
 .size-selector__item:nth-child(1) .size-selector__cup { height: 36px; }
 .size-selector__item:nth-child(2) .size-selector__cup { height: 44px; }

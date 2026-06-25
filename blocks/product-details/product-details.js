@@ -162,6 +162,9 @@ export default async function decorate(block) {
     const sizeLabels = {
       SHORT: 'Short', TALL: 'Tall', GRANDE: 'Grande', VENTI: 'Venti', TRENTA: 'Trenta',
     };
+    const sizeOz = {
+      SHORT: '8 fl oz', TALL: '12 fl oz', GRANDE: '16 fl oz', VENTI: '24 fl oz', TRENTA: '30 fl oz',
+    };
 
     // Determine current SKU size
     const currentSku = productData.sku?.toUpperCase() ?? '';
@@ -191,6 +194,7 @@ export default async function decorate(block) {
             <a class="size-selector__item${current ? ' size-selector__item--active' : ''}" href="${href}" aria-label="${sizeLabels[size]}" ${current ? 'aria-current="page"' : ''}>
               <img class="size-selector__cup" src="${sizeImages[size]}" alt="${sizeLabels[size]}" width="40" height="60" loading="lazy" />
               <span class="size-selector__size-name">${sizeLabels[size]}</span>
+              <span class="size-selector__size-oz">${sizeOz[size]}</span>
             </a>
           `).join('')}
         </div>
