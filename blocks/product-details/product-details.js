@@ -107,6 +107,7 @@ export default async function decorate(block) {
         <div class="product-details__header"></div>
         <div class="product-details__price"></div>
         <div class="product-details__gallery"></div>
+        <div class="product-details__size-selector-mobile"></div>
         <div class="product-details__short-description"></div>
         <div class="product-details__gift-card-options"></div>
         <div class="product-details__configuration">
@@ -124,7 +125,8 @@ export default async function decorate(block) {
   `);
 
   const $alert = fragment.querySelector('.product-details__alert');
-  const $sizeSelector = fragment.querySelector('.product-details__size-selector');
+  const $sizeSelector = fragment.querySelector('.product-details__left-column .product-details__size-selector');
+  const $sizeSelectorMobile = fragment.querySelector('.product-details__size-selector-mobile');
   const $gallery = fragment.querySelector('.product-details__gallery');
   const $header = fragment.querySelector('.product-details__header');
   const $price = fragment.querySelector('.product-details__price');
@@ -143,7 +145,11 @@ export default async function decorate(block) {
   // Size selector: render related-size links under the gallery
   function renderSizeSelector(productData) {
     const links = productData?.links;
-    if (!links?.length) return;
+    if (!links?.length) {
+      if ($sizeSelector) $sizeSelector.innerHTML = '';
+      if ($sizeSelectorMobile) $sizeSelectorMobile.innerHTML = '';
+      return;
+    }
 
     const sizeOrder = ['SHORT', 'TALL', 'GRANDE', 'VENTI', 'TRENTA'];
     const sizeImages = {
@@ -176,7 +182,7 @@ export default async function decorate(block) {
     const allSizes = [...currentEntry, ...related]
       .sort((a, b) => sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size));
 
-    $sizeSelector.innerHTML = `
+    const html = `
       <div class="size-selector">
         <p class="size-selector__label">Size</p>
         <div class="size-selector__items">
@@ -189,6 +195,8 @@ export default async function decorate(block) {
         </div>
       </div>
     `;
+    if ($sizeSelector) $sizeSelector.innerHTML = html;
+    if ($sizeSelectorMobile) $sizeSelectorMobile.innerHTML = html;
   }
 
   if (product) renderSizeSelector(product);

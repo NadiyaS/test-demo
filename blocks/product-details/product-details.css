@@ -179,3 +179,13 @@
 .size-selector__item:nth-child(3) .size-selector__cup { height: 52px; }
 .size-selector__item:nth-child(4) .size-selector__cup { height: 60px; }
 .size-selector__item:nth-child(5) .size-selector__cup { height: 68px; }
+
+.product-details__size-selector-mobile {
+  display: block;
+}
+
+@media (min-width: 900px) {
+  .product-details__size-selector-mobile {
+    display: none;
+  }
+}

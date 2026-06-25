@@ -102,6 +102,7 @@ await initializeDropin(async () => {
   const models = {
     ProductDetails: {
       initialData: { ...product },
+      transformer: (rawProduct) => ({ links: rawProduct?.links ?? [] }),
     },
     ProductOptions: {
       optionsTransformer: (options) => options.filter((option) => option.label !== 'Base Price'),
