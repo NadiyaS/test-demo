@@ -33,8 +33,8 @@
       "commerce-endpoint": "https://na1-sandbox.api.commerce.adobe.com/QDmZTJos8DgBZw96hVLwH1/graphql",
       "headers": {
         "cs": {
-          "AC-View-ID": "5428f6fa-a63b-43c1-98b7-0bd56f65b5bc",
-          "AC-Price-Book-ID": "SBX-PIL-GRANDE"
+          "AC-View-ID": "d0ca574b-79b6-415c-89be-c848d082a20a",
+          "AC-Price-Book-ID": "starbucks_premium"
         }
       }
     }
