@@ -171,7 +171,8 @@ export default async function decorate(block) {
     const related = links.map(({ product: p }) => {
       const sku = p.sku.toUpperCase();
       const size = sizeOrder.find((s) => sku.endsWith(`-${s}`));
-      const href = rootLink(`/products/${p.url?.split('/').pop() ?? p.sku.toLowerCase()}/${p.sku}`);
+      const slugSku = p.sku.toLowerCase();
+      const href = rootLink(`/products/${slugSku}/${slugSku}`);
       return { sku: p.sku, size, href };
     }).filter((e) => e.size);
 
@@ -202,41 +203,31 @@ export default async function decorate(block) {
   if (product) renderSizeSelector(product);
   events.on('pdp/data', (data) => { if (data?.sku) renderSizeSelector(data); }, { eager: true });
 
-  function hideBasePriceOption(root = document.body) {
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  function hideBasePriceOption() {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     let node;
     while ((node = walker.nextNode())) {
-      if (node.textContent.trim() === 'Base Price') {
-        let el = node.parentElement;
-        while (el && el !== root) {
-          if (el.tagName === 'FIELDSET' || (el.className && typeof el.className === 'string' && /option/i.test(el.className))) {
-            el.style.setProperty('display', 'none', 'important');
-            break;
-          }
-          el = el.parentElement;
-        }
+      if (node.textContent.trim() !== 'Base Price') continue;
+      // Climb until the parent has siblings — that's the individual option group
+      let candidate = node.parentElement;
+      while (candidate && candidate.parentElement && candidate.parentElement.children.length < 2) {
+        candidate = candidate.parentElement;
+      }
+      if (candidate && candidate !== document.body && !candidate.hasAttribute('data-hidden-option')) {
+        candidate.setAttribute('data-hidden-option', 'base-price');
       }
     }
   }
 
-  // Watch for options to render and hide Base Price as soon as it appears
-  const basePriceObserver = new MutationObserver(() => hideBasePriceOption());
-  basePriceObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+  // Inject a style rule so the attribute hides the element
+  const bpStyle = document.createElement('style');
+  bpStyle.textContent = '[data-hidden-option="base-price"] { display: none !important; }';
+  document.head.appendChild(bpStyle);
 
-  // DEBUG: static size test block
-  if ($sizeSelectorMobile) {
-    $sizeSelectorMobile.innerHTML = `
-      <div class="size-selector">
-        <p class="size-selector__label">Size (static test)</p>
-        <div class="size-selector__items">
-          <a class="size-selector__item" href="#"><img class="size-selector__cup" src="https://globalassets.starbucks.com/digitalassets/cups/CPR208_Short.png" alt="Short" width="40" height="36" /><span class="size-selector__size-name">Short</span></a>
-          <a class="size-selector__item" href="#"><img class="size-selector__cup" src="https://globalassets.starbucks.com/digitalassets/cups/CPR208_Tall.png" alt="Tall" width="40" height="44" /><span class="size-selector__size-name">Tall</span></a>
-          <a class="size-selector__item size-selector__item--active" href="#"><img class="size-selector__cup" src="https://globalassets.starbucks.com/digitalassets/cups/CPR208_Grande.png" alt="Grande" width="40" height="52" /><span class="size-selector__size-name">Grande</span></a>
-          <a class="size-selector__item" href="#"><img class="size-selector__cup" src="https://globalassets.starbucks.com/digitalassets/cups/CPR208_VentiHot.png" alt="Venti" width="40" height="60" /><span class="size-selector__size-name">Venti</span></a>
-        </div>
-      </div>
-    `;
-  }
+  // Watch for options to render and hide Base Price as soon as it appears
+  const basePriceObserver = new MutationObserver(hideBasePriceOption);
+  basePriceObserver.observe(document.body, { childList: true, subtree: true });
+
 
   const gallerySlots = {
     CarouselThumbnail: (ctx) => {
