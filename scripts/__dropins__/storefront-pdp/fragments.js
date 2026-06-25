@@ -101,6 +101,11 @@ fragment PRODUCT_FRAGMENT on ProductView {
   urlKey
   externalId
 
+  links(linkTypes: ["self"]) {
+    sku
+    linkType
+  }
+
   images(roles: []) {
     url
     label
