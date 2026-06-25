@@ -202,6 +202,24 @@ export default async function decorate(block) {
   if (product) renderSizeSelector(product);
   events.on('pdp/data', (data) => { if (data?.sku) renderSizeSelector(data); }, { eager: true });
 
+  function hideBasePriceOption() {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      if (node.textContent.trim() === 'Base Price') {
+        let el = node.parentElement;
+        while (el && el !== document.body) {
+          if (el.tagName === 'FIELDSET' || (el.className && /option/i.test(el.className))) {
+            el.style.display = 'none';
+            break;
+          }
+          el = el.parentElement;
+        }
+      }
+    }
+  }
+  events.on('pdp/data', () => requestAnimationFrame(hideBasePriceOption), { eager: true });
+
   // DEBUG: static size test block
   if ($sizeSelectorMobile) {
     $sizeSelectorMobile.innerHTML = `
