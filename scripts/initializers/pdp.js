@@ -117,6 +117,7 @@ await initializeDropin(async () => {
     models,
     acdl: true,
     persistURLParams: true,
+    preselectFirstOption: true,
   });
 })();
 
