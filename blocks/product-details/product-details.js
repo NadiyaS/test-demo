@@ -266,7 +266,7 @@ export default async function decorate(block) {
       initBundlePricing(data);
       renderDynamicPrice();
 
-      const reward = data.reward;
+      const reward = data.attributes?.find((a) => a.name === 'reward')?.value;
       $reward.innerHTML = reward
         ? `<span class="product-details__reward-label">Reward:</span>
            <span class="product-details__reward-value">${reward} pts</span>`
