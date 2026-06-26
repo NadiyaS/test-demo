@@ -207,16 +207,16 @@ export default async function decorate(block) {
       SHORT: '8 fl oz', TALL: '12 fl oz', GRANDE: '16 fl oz', VENTI: '24 fl oz', TRENTA: '30 fl oz',
     };
 
-    // Determine current SKU size
+    // Determine current product size from sbx_size attribute, fall back to SKU suffix
+    const currentSbxSize = productData.attributes?.find((a) => a.name === 'sbx_size')?.value?.toUpperCase();
     const currentSku = productData.sku?.toUpperCase() ?? '';
-    const currentSize = sizeOrder.find((s) => currentSku.endsWith(`-${s}`));
+    const currentSize = currentSbxSize ?? sizeOrder.find((s) => currentSku.endsWith(`-${s}`));
 
     // Build entries: current + related, sorted
     const related = links.map(({ product: p }) => {
-      const sku = p.sku.toUpperCase();
-      const size = sizeOrder.find((s) => sku.endsWith(`-${s}`));
-      const slugSku = p.sku.toLowerCase();
-      const href = rootLink(`/products/${slugSku}/${slugSku}`);
+      const size = p.attributes?.find((a) => a.name === 'sbx_size')?.value?.toUpperCase()
+        ?? sizeOrder.find((s) => p.sku.toUpperCase().endsWith(`-${s}`));
+      const href = rootLink(`/products/${(p.urlKey ?? p.sku).toLowerCase()}/${p.sku.toLowerCase()}`);
       return { sku: p.sku, size, href };
     }).filter((e) => e.size);
 
@@ -257,20 +257,23 @@ export default async function decorate(block) {
   async function initBundlePricing(pdpProduct) {
     if (!pdpProduct?.sku || !pdpProduct?.options) return;
 
-    // Build sku→uid from ACO option values
+    // Build sku→uid from ACO option values (dropin transforms values→items)
     const skuToUid = new Map();
     for (const opt of pdpProduct.options) {
-      for (const val of opt.values ?? []) {
-        if (val.product?.sku) skuToUid.set(val.product.sku, val.id);
-        // capture currency from the first price found
-        if (!currency && val.product?.price?.final?.amount?.currency) {
-          currency = val.product.price.final.amount.currency;
+      for (const item of opt.items ?? []) {
+        if (item.product?.sku) skuToUid.set(item.product.sku, item.id);
+        if (!currency && item.product?.price?.final?.amount?.currency) {
+          currency = item.product.price.final.amount.currency;
         }
       }
     }
+    // eslint-disable-next-line no-console
+    console.log('[bundle-price] skuToUid', [...skuToUid.entries()], 'options sample', JSON.stringify(pdpProduct.options?.[0]?.items?.[0]));
 
     // Fetch delta prices from AC core GraphQL
     const { skuToDelta } = await fetchBundleLinkPrices(pdpProduct.sku);
+    // eslint-disable-next-line no-console
+    console.log('[bundle-price] skuToDelta', [...skuToDelta.entries()]);
 
     // Join: UID → delta
     uidToDelta = new Map();
@@ -278,11 +281,15 @@ export default async function decorate(block) {
       const uid = skuToUid.get(sku);
       if (uid !== undefined) uidToDelta.set(uid, delta);
     }
+    // eslint-disable-next-line no-console
+    console.log('[bundle-price] uidToDelta', [...uidToDelta.entries()]);
   }
 
   function renderDynamicPrice() {
     const configValues = pdpApi.getProductConfigurationValues();
     const selectedUids = configValues?.optionsUIDs ?? [];
+    // eslint-disable-next-line no-console
+    console.log('[bundle-price] renderDynamicPrice selectedUids', selectedUids, 'uidToDelta.size', uidToDelta.size);
     if (!selectedUids.length || !uidToDelta.size) return;
 
     const total = selectedUids.reduce((sum, uid) => sum + (uidToDelta.get(uid) ?? 0), 0);

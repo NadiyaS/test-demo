@@ -102,7 +102,9 @@ await initializeDropin(async () => {
   const models = {
     ProductDetails: {
       initialData: { ...product },
-      transformer: (rawProduct) => ({ links: rawProduct?.links ?? [] }),
+      transformer: (rawProduct) => ({
+        links: (rawProduct?.links ?? []).filter((l) => l.linkTypes?.includes('RELATED')),
+      }),
     },
     ProductOptions: {},
   };
