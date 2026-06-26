@@ -31,6 +31,7 @@ import {
   setJsonLd,
   fetchPlaceholders,
   getProductLink,
+  CORE_FETCH_GRAPHQL,
 } from '../../scripts/commerce.js';
 
 // Initializers
@@ -72,6 +73,44 @@ function updateAddToCartButtonText(addToCartInstance, inCart, labels) {
 }
 
 /**
+ * Fetches bundle option link delta prices from AC core GraphQL.
+ * Returns { skuToDelta: Map<sku, price>, baseSkus: Set<sku> }
+ */
+async function fetchBundleLinkPrices(sku) {
+  const { data } = await CORE_FETCH_GRAPHQL.fetchGraphQl(`
+    query GetBundleDeltas($sku: String!) {
+      products(filter: { sku: { eq: $sku } }) {
+        items {
+          ... on BundleProduct {
+            items {
+              title
+              options {
+                price
+                product { sku }
+              }
+            }
+          }
+        }
+      }
+    }
+  `, { variables: { sku } });
+
+  const bundleItems = data?.products?.items?.[0]?.items ?? [];
+  const skuToDelta = new Map();
+  const baseSkus = new Set();
+
+  for (const item of bundleItems) {
+    for (const opt of item.options ?? []) {
+      if (opt.product?.sku) {
+        skuToDelta.set(opt.product.sku, opt.price ?? 0);
+        if (item.title === 'Base Price') baseSkus.add(opt.product.sku);
+      }
+    }
+  }
+  return { skuToDelta, baseSkus };
+}
+
+/**
  * Formats numeric attribute values for display (e.g., "10.000000" → "10").
  * Non-numeric values are returned as-is.
  */
@@ -106,6 +145,7 @@ export default async function decorate(block) {
       <div class="product-details__right-column">
         <div class="product-details__header"></div>
         <div class="product-details__price"></div>
+        <div class="product-details__dynamic-price"></div>
         <div class="product-details__gallery"></div>
         <div class="product-details__size-selector-mobile"></div>
         <div class="product-details__short-description"></div>
@@ -130,6 +170,7 @@ export default async function decorate(block) {
   const $gallery = fragment.querySelector('.product-details__gallery');
   const $header = fragment.querySelector('.product-details__header');
   const $price = fragment.querySelector('.product-details__price');
+  const $dynamicPrice = fragment.querySelector('.product-details__dynamic-price');
   const $galleryMobile = fragment.querySelector('.product-details__right-column .product-details__gallery');
   const $shortDescription = fragment.querySelector('.product-details__short-description');
   const $options = fragment.querySelector('.product-details__options');
@@ -205,7 +246,61 @@ export default async function decorate(block) {
   }
 
   if (product) renderSizeSelector(product);
-  events.on('pdp/data', (data) => { if (data?.sku) renderSizeSelector(data); }, { eager: true });
+
+  // ── Dynamic bundle price ──────────────────────────────────────────────────
+  // uidToDelta: option-value UID → price delta from AC bundle link
+  // currency: store currency code
+  let uidToDelta = new Map();
+  let currency = 'USD';
+
+  // Build UID→delta map when product data is available
+  async function initBundlePricing(pdpProduct) {
+    if (!pdpProduct?.sku || !pdpProduct?.options) return;
+
+    // Build sku→uid from ACO option values
+    const skuToUid = new Map();
+    for (const opt of pdpProduct.options) {
+      for (const val of opt.values ?? []) {
+        if (val.product?.sku) skuToUid.set(val.product.sku, val.id);
+        // capture currency from the first price found
+        if (!currency && val.product?.price?.final?.amount?.currency) {
+          currency = val.product.price.final.amount.currency;
+        }
+      }
+    }
+
+    // Fetch delta prices from AC core GraphQL
+    const { skuToDelta } = await fetchBundleLinkPrices(pdpProduct.sku);
+
+    // Join: UID → delta
+    uidToDelta = new Map();
+    for (const [sku, delta] of skuToDelta) {
+      const uid = skuToUid.get(sku);
+      if (uid !== undefined) uidToDelta.set(uid, delta);
+    }
+  }
+
+  function renderDynamicPrice() {
+    const configValues = pdpApi.getProductConfigurationValues();
+    const selectedUids = configValues?.optionsUIDs ?? [];
+    if (!selectedUids.length || !uidToDelta.size) return;
+
+    const total = selectedUids.reduce((sum, uid) => sum + (uidToDelta.get(uid) ?? 0), 0);
+    const formatted = new Intl.NumberFormat(document.documentElement.lang || 'en-US', {
+      style: 'currency', currency,
+    }).format(total);
+
+    $dynamicPrice.innerHTML = `<span class="product-details__dynamic-price-label">Total:</span>
+      <span class="product-details__dynamic-price-value">${formatted}</span>`;
+  }
+
+  events.on('pdp/data', async (data) => {
+    if (data?.sku) {
+      renderSizeSelector(data);
+      await initBundlePricing(data);
+      renderDynamicPrice();
+    }
+  }, { eager: true });
 
   function hideBasePriceOption() {
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -435,6 +530,8 @@ export default async function decorate(block) {
 
   // Handle option changes
   events.on('pdp/values', () => {
+    renderDynamicPrice();
+
     if (wishlistToggleBtn) {
       const configValues = pdpApi.getProductConfigurationValues();
 

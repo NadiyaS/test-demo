@@ -116,6 +116,33 @@
   }
 }
 
+/* Dynamic bundle price */
+.product-details__dynamic-price {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-xsmall);
+  margin-top: var(--spacing-xsmall);
+  margin-bottom: var(--spacing-small);
+  min-height: 1.5em;
+}
+
+.product-details__dynamic-price:empty {
+  display: none;
+}
+
+.product-details__dynamic-price-label {
+  font-size: var(--type-body-2-font-size);
+  color: var(--color-neutral-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.product-details__dynamic-price-value {
+  font-size: 24px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-neutral-800);
+}
+
 /* Size selector */
 .size-selector {
   margin-top: var(--spacing-medium);
