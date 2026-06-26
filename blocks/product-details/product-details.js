@@ -107,6 +107,7 @@ export default async function decorate(block) {
         <div class="product-details__header"></div>
         <div class="product-details__price"></div>
         <div class="product-details__dynamic-price"></div>
+        <div class="product-details__reward"></div>
         <div class="product-details__gallery"></div>
         <div class="product-details__size-selector-mobile"></div>
         <div class="product-details__short-description"></div>
@@ -132,6 +133,7 @@ export default async function decorate(block) {
   const $header = fragment.querySelector('.product-details__header');
   const $price = fragment.querySelector('.product-details__price');
   const $dynamicPrice = fragment.querySelector('.product-details__dynamic-price');
+  const $reward = fragment.querySelector('.product-details__reward');
   const $galleryMobile = fragment.querySelector('.product-details__right-column .product-details__gallery');
   const $shortDescription = fragment.querySelector('.product-details__short-description');
   const $options = fragment.querySelector('.product-details__options');
@@ -263,6 +265,12 @@ export default async function decorate(block) {
       renderSizeSelector(data);
       initBundlePricing(data);
       renderDynamicPrice();
+
+      const reward = data.reward;
+      $reward.innerHTML = reward
+        ? `<span class="product-details__reward-label">Reward:</span>
+           <span class="product-details__reward-value">${reward} pts</span>`
+        : '';
     }
   }, { eager: true });
 

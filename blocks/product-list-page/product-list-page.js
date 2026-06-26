@@ -90,7 +90,7 @@ export default async function decorate(block) {
       phrase: searchState.phrase,
       currentPage: searchState.currentPage,
       pageSize,
-      sort: searchState.sort,
+      sort: searchState?.sort?.length ? searchState.sort : [{ attribute: 'position', direction: 'DESC' }],
       // Always add visibility filter to the request
       filter: [visibilityFilter, ...userFilters],
     }).catch((e) => {
