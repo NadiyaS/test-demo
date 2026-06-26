@@ -209,23 +209,32 @@ export default async function decorate(block) {
   if (product) renderSizeSelector(product);
 
   // ── Dynamic bundle price ──────────────────────────────────────────────────
-  // uidToDelta: option-value UID → price delta from AC bundle link
-  // currency: store currency code
   let uidToDelta = new Map();
+  let basePriceUid = null; // always included even when the option group is hidden
   let currency = 'USD';
 
-  // Map each option value UID → product price (from ACO, respects price book)
   function initBundlePricing(pdpProduct) {
     if (!pdpProduct?.options) return;
 
     uidToDelta = new Map();
+    basePriceUid = null;
+
     for (const opt of pdpProduct.options) {
+      const isBasePrice = opt.label === 'Base Price';
       for (const item of opt.items ?? []) {
         const price = item.product?.price?.final?.amount?.value ?? 0;
         if (item.id) uidToDelta.set(item.id, price);
+        // Capture the base price UID (default/selected item in the hidden group)
+        if (isBasePrice && !basePriceUid && (item.selected || item.isDefault)) {
+          basePriceUid = item.id;
+        }
         if (!currency && item.product?.price?.final?.amount?.currency) {
           currency = item.product.price.final.amount.currency;
         }
+      }
+      // Fallback: if no explicit default found, use first item in Base Price group
+      if (isBasePrice && !basePriceUid) {
+        basePriceUid = opt.items?.[0]?.id ?? null;
       }
     }
   }
@@ -233,9 +242,14 @@ export default async function decorate(block) {
   function renderDynamicPrice() {
     const configValues = pdpApi.getProductConfigurationValues();
     const selectedUids = configValues?.optionsUIDs ?? [];
-    if (!selectedUids.length || !uidToDelta.size) return;
+    if (!uidToDelta.size) return;
 
-    const total = selectedUids.reduce((sum, uid) => sum + (uidToDelta.get(uid) ?? 0), 0);
+    // Merge selected UIDs with base price UID (always included, even if hidden)
+    const allUids = new Set(selectedUids);
+    if (basePriceUid) allUids.add(basePriceUid);
+    if (!allUids.size) return;
+
+    const total = [...allUids].reduce((sum, uid) => sum + (uidToDelta.get(uid) ?? 0), 0);
     const formatted = new Intl.NumberFormat(document.documentElement.lang || 'en-US', {
       style: 'currency', currency,
     }).format(total);
