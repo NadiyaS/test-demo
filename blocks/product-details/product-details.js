@@ -268,8 +268,8 @@ export default async function decorate(block) {
 
       const reward = data.attributes?.find((a) => a.name === 'reward')?.value;
       $reward.innerHTML = reward
-        ? `<span class="product-details__reward-label">Reward:</span>
-           <span class="product-details__reward-value">${reward} pts</span>`
+        ? `<span class="product-details__dynamic-price-label">Reward:</span>
+           <span class="product-details__dynamic-price-value">${reward}</span>`
         : '';
     }
   }, { eager: true });
