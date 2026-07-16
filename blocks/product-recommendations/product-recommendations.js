@@ -28,11 +28,11 @@ import '../../scripts/initializers/wishlist.js';
 
 const isMobile = window.matchMedia('only screen and (max-width: 900px)').matches;
 
-// Only show recommended products whose `visibility` matches this value.
-// The backend returns the ProductView `visibility` string on each item; adjust
-// this if your instance returns a different value (e.g. 'SEARCH' vs 'Search').
-// Comparison is case-insensitive and exact, so 'Catalog, Search' is excluded.
-const ALLOWED_VISIBILITY = 'Search';
+// Only show recommended products whose `visibility` contains this token.
+// The backend returns the ProductView `visibility` string on each item; the
+// check is a case-insensitive substring match, so values like 'Search' and
+// 'Catalog, Search' both pass while 'Catalog' alone is hidden.
+const REQUIRED_VISIBILITY = 'Search';
 
 /**
  * Derives a stable product key from a product URL.
@@ -148,9 +148,9 @@ export default async function decorate(block) {
   let recommendationsData = null;
 
   /**
-   * Hides rendered recommendation cards whose product visibility is not
-   * ALLOWED_VISIBILITY. Cards render as `.dropin-product-item-card`; each is
-   * matched back to its item via the sku in its product link.
+   * Hides rendered recommendation cards whose product visibility does not
+   * contain REQUIRED_VISIBILITY. Cards render as `.dropin-product-item-card`;
+   * each is matched back to its item via the sku in its product link.
    * @param {HTMLElement} container - The recommendations wrapper element
    */
   function applyVisibilityFilter(container) {
@@ -173,7 +173,7 @@ export default async function decorate(block) {
       const cardVisibility = key ? visibilityByKey.get(key) : undefined;
 
       const hide = cardVisibility !== undefined
-        && normalizeVisibility(cardVisibility) !== normalizeVisibility(ALLOWED_VISIBILITY);
+        && !normalizeVisibility(cardVisibility).includes(normalizeVisibility(REQUIRED_VISIBILITY));
 
       card.style.display = hide ? 'none' : '';
       if (!hide) visibleCount += 1;
