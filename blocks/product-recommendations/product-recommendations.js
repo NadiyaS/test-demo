@@ -28,6 +28,33 @@ import '../../scripts/initializers/wishlist.js';
 
 const isMobile = window.matchMedia('only screen and (max-width: 900px)').matches;
 
+// Only show recommended products whose `visibility` matches this value.
+// The backend returns the ProductView `visibility` string on each item; adjust
+// this if your instance returns a different value (e.g. 'SEARCH' vs 'Search').
+// Comparison is case-insensitive and exact, so 'Catalog, Search' is excluded.
+const ALLOWED_VISIBILITY = 'Search';
+
+/**
+ * Derives a stable product key from a product URL.
+ * Product links are `/products/{urlKey}/{sku}`, so the last path segment
+ * (the sku) uniquely identifies a rendered card.
+ * @param {string} link - The product link (absolute or relative)
+ * @returns {string|null} - The last path segment, or null if not parseable
+ */
+function getProductKey(link) {
+  if (!link) return null;
+  try {
+    const { pathname } = new URL(link, window.location.origin);
+    return pathname.replace(/\/+$/, '').split('/').pop() || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function normalizeVisibility(value) {
+  return (value || '').trim().toLowerCase();
+}
+
 /**
  * Validates and returns a product view history entry if valid
  * @param {Object} entry - The history entry to validate
@@ -109,9 +136,58 @@ export default async function decorate(block) {
 
   block.appendChild(fragment);
 
+  const createProductLink = (item) => getProductLink(item.urlKey, item.sku);
+
   let visibility = !isMobile;
   let isLoading = false;
   let loadTimeout = null;
+  // Latest recommendation units emitted on the `recommendations/data` event.
+  // The ProductList container fetches and renders on its own, so we cannot
+  // filter the data before render — instead we hide rendered cards whose
+  // product visibility is not allowed, using this data to look visibility up.
+  let recommendationsData = null;
+
+  /**
+   * Hides rendered recommendation cards whose product visibility is not
+   * ALLOWED_VISIBILITY. Cards render as `.dropin-product-item-card`; each is
+   * matched back to its item via the sku in its product link.
+   * @param {HTMLElement} container - The recommendations wrapper element
+   */
+  function applyVisibilityFilter(container) {
+    if (!Array.isArray(recommendationsData)) return;
+
+    // Map product key (sku from link) -> visibility for all recommended items.
+    const visibilityByKey = new Map();
+    recommendationsData.forEach((unit) => {
+      unit?.items?.forEach((item) => {
+        const key = getProductKey(createProductLink(item));
+        if (key) visibilityByKey.set(key, item.visibility);
+      });
+    });
+    if (visibilityByKey.size === 0) return;
+
+    let visibleCount = 0;
+    container.querySelectorAll('.dropin-product-item-card').forEach((card) => {
+      const link = card.querySelector('a[href*="/products/"]');
+      const key = getProductKey(link?.getAttribute('href'));
+      const cardVisibility = key ? visibilityByKey.get(key) : undefined;
+
+      const hide = cardVisibility !== undefined
+        && normalizeVisibility(cardVisibility) !== normalizeVisibility(ALLOWED_VISIBILITY);
+
+      card.style.display = hide ? 'none' : '';
+      if (!hide) visibleCount += 1;
+    });
+
+    // Hide the whole unit if nothing passed the visibility filter,
+    // and restore it if a later render brings matching products back.
+    $wrapper.style.display = visibleCount === 0 ? 'none' : '';
+  }
+
+  // Re-apply the filter whenever the container re-renders (render is async
+  // and can happen after the `recommendations/data` event fires).
+  const filterObserver = new MutationObserver(() => applyVisibilityFilter($wrapper));
+  filterObserver.observe($wrapper, { childList: true, subtree: true });
 
   async function loadRecommendation(
     context,
@@ -142,7 +218,6 @@ export default async function decorate(block) {
     }
 
     const storeViewCode = getConfigValue('headers.cs.Magento-Store-View-Code');
-    const createProductLink = (item) => getProductLink(item.urlKey, item.sku);
 
     // Get product view history
     context.userViewHistory = getProductViewHistory(storeViewCode);
@@ -150,16 +225,13 @@ export default async function decorate(block) {
     // Get purchase history
     context.userPurchaseHistory = getPurchaseHistory(storeViewCode);
 
-    let recommendationsData = null;
-
     // Get data from the event bus to set publish events
     events.on(
       'recommendations/data',
       (data) => {
         recommendationsData = data;
-        if (data?.items?.length) {
-          recommendationsData = data;
-        }
+        // Filter the freshly rendered cards by product visibility.
+        applyVisibilityFilter($wrapper);
       },
       { eager: true },
     );
