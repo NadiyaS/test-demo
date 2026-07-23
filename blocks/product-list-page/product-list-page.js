@@ -146,6 +146,7 @@ export default async function decorate(block) {
     // Product List
     provider.render(SearchResults, {
       routeProduct: (product) => getProductLink(product.urlKey, product.sku),
+      noImage: { src: '/blocks/product-details/images/placeholder.png', alt: 'Product Image' },
       slots: {
         ProductImage: (ctx) => {
           const { product, defaultImageProps } = ctx;

@@ -271,6 +271,17 @@ export default async function decorate(block) {
         ? `<span class="product-details__dynamic-price-label">Reward:</span>
            <span class="product-details__dynamic-price-value">${reward}</span>`
         : '';
+
+      // Set ACDL topLevelSku to the PRIMARY link SKU so Adobe Target treats all
+      // sizes of the same beverage as a single product. Falls back to the
+      // current SKU if no PRIMARY link exists (preserves default dropin behavior).
+      const primarySku = data.links?.find((l) => l.linkTypes?.includes('PRIMARY'))?.product?.sku ?? data.sku;
+      window.adobeDataLayer = window.adobeDataLayer || [];
+      window.adobeDataLayer.push({ productContext: null });
+      window.adobeDataLayer.push((dl) => {
+        const current = dl.getState?.()?.productContext ?? {};
+        dl.push({ productContext: { ...current, topLevelSku: primarySku } });
+      });
     }
   }, { eager: true });
 
@@ -347,7 +358,7 @@ export default async function decorate(block) {
       imageParams: {
         ...IMAGES_SIZES,
       },
-
+      noImage: { src: '/blocks/product-details/images/placeholder.png', alt: 'Product Image' },
       slots: gallerySlots,
     })($galleryMobile),
 
@@ -362,7 +373,7 @@ export default async function decorate(block) {
       imageParams: {
         ...IMAGES_SIZES,
       },
-
+      noImage: { src: '/blocks/product-details/images/placeholder.png', alt: 'Product Image' },
       slots: gallerySlots,
     })($gallery),
 
