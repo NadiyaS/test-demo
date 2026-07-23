@@ -101,7 +101,7 @@ fragment PRODUCT_FRAGMENT on ProductView {
   urlKey
   externalId
 
-  links(linkTypes: ["RELATED"]) {
+  links(linkTypes: ["VARIANT", "PRIMARY"]) {
     linkTypes
     product {
       sku

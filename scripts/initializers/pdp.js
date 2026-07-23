@@ -103,7 +103,7 @@ await initializeDropin(async () => {
     ProductDetails: {
       initialData: { ...product },
       transformer: (rawProduct) => ({
-        links: (rawProduct?.links ?? []).filter((l) => l.linkTypes?.includes('RELATED')),
+        links: (rawProduct?.links ?? []).filter((l) => l.linkTypes?.includes('VARIANT') || l.linkTypes?.includes('PRIMARY')),
       }),
     },
     ProductOptions: {},
