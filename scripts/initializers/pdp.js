@@ -102,9 +102,11 @@ await initializeDropin(async () => {
   const models = {
     ProductDetails: {
       initialData: { ...product },
-      transformer: (rawProduct) => ({
-        links: (rawProduct?.links ?? []).filter((l) => l.linkTypes?.includes('VARIANT') || l.linkTypes?.includes('PRIMARY')),
-      }),
+      transformer: (rawProduct) => {
+        const links = (rawProduct?.links ?? []).filter((l) => l.linkTypes?.includes('VARIANT') || l.linkTypes?.includes('PRIMARY'));
+        const topLevelSku = links.find((l) => l.linkTypes?.includes('PRIMARY'))?.product?.sku ?? rawProduct?.sku;
+        return { links, topLevelSku };
+      },
     },
     ProductOptions: {},
   };
